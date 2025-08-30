@@ -44,6 +44,7 @@ DPGEN_WEB/
 - Histograms are generated once per task and reused.
 - Designed for local use — do not expose to public networks.
 - No external tracking or data collection.
+- par_qe.json and machine.json - run dpgen with Quantum espresso on local machine with 1 GPU and 16 cores. Number of cores can be chaged in command mpirun. Used system mpirun cos QE was compiled with system mpi not with dpgen one - they different
 
 ## Feedback
 Open an issue or pull request on GitHub if you:
