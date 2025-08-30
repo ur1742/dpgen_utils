@@ -189,18 +189,7 @@
         {% endif %}
     </div>
 
-    <!-- Кнопки навигации -->
-    {% if work_dir %}
-    <div class="section">
-        <h2>🧭 Navigation</h2>
-        <div class="btn-container">
-            <a href="/train_history" target="blank" class="btn-success">📊 View Training History</a>
-        </div>
-        <p style="text-align: center; color: #7f8c8d; font-size: 0.9em;">
-            Browse completed training tasks and their loss curves
-        </p>
-    </div>
-    {% endif %}
+
 
     <!-- График ошибки обучения -->
     {% if data.loss_data and data.loss_data|length > 0 %}
@@ -341,7 +330,18 @@
         </ul>
     </div>
     {% endif %}
-
+    <!-- Кнопки навигации -->
+    {% if work_dir %}
+    <div class="section">
+        <h2>Train History</h2>
+        <div class="btn-container">
+            <a href="/train_history" target="blank" class="btn-success">📊 View Training History</a>
+        </div>
+        <p style="text-align: center; color: #7f8c8d; font-size: 0.9em;">
+            Browse completed training tasks and their loss curves
+        </p>
+    </div>
+    {% endif %}
     <div class="footer">
         DPGEN Web Monitor • Auto-refresh every 60 sec
     </div>
