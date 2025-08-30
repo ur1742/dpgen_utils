@@ -62,6 +62,42 @@
         button:hover {
             background-color: #2980b9;
         }
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn-success:hover {
+            background-color: #219653;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-container {
+            text-align: center;
+            margin: 20px 0;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -117,6 +153,23 @@
             font-family: monospace;
             font-size: 0.9em;
         }
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .card-content {
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
@@ -135,6 +188,19 @@
             <p style="color: red; margin-top: 10px;">❌ {{ error }}</p>
         {% endif %}
     </div>
+
+    <!-- Кнопки навигации -->
+    {% if work_dir %}
+    <div class="section">
+        <h2>🧭 Navigation</h2>
+        <div class="btn-container">
+            <a href="/train_history" target="blank" class="btn-success">📊 View Training History</a>
+        </div>
+        <p style="text-align: center; color: #7f8c8d; font-size: 0.9em;">
+            Browse completed training tasks and their loss curves
+        </p>
+    </div>
+    {% endif %}
 
     <!-- График ошибки обучения -->
     {% if data.loss_data and data.loss_data|length > 0 %}
@@ -277,7 +343,7 @@
     {% endif %}
 
     <div class="footer">
-        DPGEN Web Monitor
+        DPGEN Web Monitor • Auto-refresh every 60 sec
     </div>
 </div>
 
@@ -312,11 +378,11 @@ document.getElementById('dirForm').onsubmit = function(e) {
 const ctx = document.getElementById('lossChart').getContext('2d');
 window.lossChart = new Chart(ctx, {
     type: 'line',
-    data: {
+     {
         labels: Array.from({length: {{ data.loss_data|length }}}, (_, i) => `Step ${i + 1}`),
         datasets: [{
             label: 'Validation Loss',
-            data: {{ data.loss_data | tojson }},
+             {{ data.loss_data | tojson }},
             borderColor: '#e74c3c',
             backgroundColor: 'rgba(231, 76, 60, 0.1)',
             borderWidth: 2,

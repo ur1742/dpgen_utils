@@ -24,6 +24,7 @@ Thumbs.db
 
 # Статика (гистограммы)
 static/model_devi/*.png
+static/train_plots/*.png
 
 # IDE
 .vscode/

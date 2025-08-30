@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Training History - DPGEN Web Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 25px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #3498db;
+            text-decoration: none;
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+            background-color: #e9ecef;
+        }
+        .section {
+            margin: 25px 0;
+            padding: 18px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        h2 {
+            margin-top: 0;
+            color: #3498db;
+            font-size: 1.3em;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+        }
+        .task-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .task-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .task-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .task-info {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        .plot-container {
+            width: 100%;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .plot-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .loading-image {
+            color: #3498db;
+            font-size: 0.9em;
+            text-align: center;
+            padding: 10px;
+        }
+        .no-data {
+            text-align: center;
+            color: #95a5a6;
+            font-style: italic;
+            padding: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #95a5a6;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📊 Training History</h1>
+    <p class="subtitle">Completed Training Tasks</p>
+    
+    <a href="/" class="back-link">← Back to Main Monitor</a>
+    
+    {% if train_data %}
+        {% for iter_data in train_data %}
+        <div class="section">
+            <h2>📁 {{ iter_data.iteration }}</h2>
+            {% if iter_data.tasks %}
+            <div class="task-grid">
+                {% for task in iter_data.tasks %}
+                <div class="task-card">
+                    <div class="task-title">Task {{ task.task_id }}</div>
+                    <div class="task-info">
+                        📊 {{ task.data_points }} data points | 
+                        🕐 {{ task.finish_time }}
+                    </div>
+                    <div class="plot-container">
+                        <img src="/cached_train_plot/{{ task.image_filename }}" 
+                             alt="Training Curve for {{ task.iteration }} Task {{ task.task_id }}"
+                             class="plot-image">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-data">No training tasks found</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="no-data">No training history data available</div>
+    {% endif %}
+    
+    <div class="footer">
+        DPGEN Web Monitor - Training History
+    </div>
+</div>
+</body>
+</html>
