@@ -1,0 +1,306 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DPGEN Web Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 25px;
+        }
+        .section {
+            margin: 25px 0;
+            padding: 18px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        h2 {
+            margin-top: 0;
+            color: #3498db;
+            font-size: 1.3em;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+        }
+        input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        button {
+            padding: 10px 14px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #aaa;
+        }
+        th {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        details {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f3f6;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        summary {
+            font-weight: bold;
+            cursor: pointer;
+            padding: 5px 0;
+        }
+        code {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.95em;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #95a5a6;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>DPGEN Web Interface</h1>
+    <p class="subtitle">Real-time monitoring of DPGEN tasks</p>
+
+    <!-- Выбор директории -->
+    <div class="section">
+        <h2>📁 Working Directory</h2>
+        <form id="dirForm">
+            <input type="text" id="workDir" value="{{ work_dir }}" placeholder="Enter DPGEN working directory">
+            <button type="submit">Set Directory</button>
+        </form>
+        {% if error %}
+            <p style="color: red; margin-top: 10px;">❌ {{ error }}</p>
+        {% endif %}
+    </div>
+
+    <!-- График ошибки обучения -->
+    {% if data.loss_data and data.loss_data|length > 0 %}
+    <div class="section">
+        <h2>📉 Training Loss (Last 10)</h2>
+        <canvas id="lossChart" height="100"></canvas>
+    </div>
+    {% endif %}
+
+    <!-- Текущая задача -->
+    {% if data.current_hash %}
+    <div class="section">
+        <h2>🚀 Current Execution</h2>
+        <table>
+            <tr><th>Field</th><th>Value</th></tr>
+            <tr><td><strong>Hash Directory</strong></td><td><code>{{ data.current_hash.hash_name }}</code></td></tr>
+            <tr><td><strong>Last Modified</strong></td><td>{{ data.current_hash.mtime }}</td></tr>
+            <tr><td><strong>Iteration</strong></td><td>{{ data.current_stage.iter }}</td></tr>
+            <tr><td><strong>Stage</strong></td><td>{{ data.current_stage.stage_label }}</td></tr>
+        </table>
+
+        <!-- График обучения -->
+        {% if data.train_plot %}
+        <h3>📉 Training Loss Curve</h3>
+        <img src="{{ data.train_plot }}" alt="Training Loss" style="max-width: 100%; border: 1px solid #ddd;">
+        {% endif %}
+
+        <!-- Анализ FP -->
+        {% if data.fp_analysis %}
+        <h3>🔍 FP Tasks Analysis</h3>
+        <table>
+            <tr><th>Metric</th><th>Value</th></tr>
+            <tr><td><strong>Total Tasks</strong></td><td>{{ data.fp_analysis.total }}</td></tr>
+            <tr><td><strong>✅ Finished</strong></td><td>{{ data.fp_analysis.done }}</td></tr>
+            <tr><td><strong>❌ Failed</strong></td><td>{{ data.fp_analysis.failed | length }}</td></tr>
+            <tr><td><strong>⚠️ Running</strong></td><td>{{ data.fp_analysis.running | length }}</td></tr>
+            <tr><td><strong>⏸️ Pending</strong></td><td>{{ data.fp_analysis.pending | length }}</td></tr>
+            <tr><td><strong>🔄 Remaining</strong></td><td>{{ data.fp_analysis.remaining }}</td></tr>
+        </table>
+
+        {% if data.fp_analysis.has_data %}
+        <p><strong>⏱️ Average task time:</strong> {{ data.fp_analysis.avg_duration_str }}</p>
+        <p><strong>🕒 Predicted time for remaining:</strong> {{ data.fp_analysis.predicted_remaining_str }}</p>
+        {% endif %}
+
+        <details>
+            <summary>📋 Show task lists</summary>
+            <ul style="padding-left: 20px;">
+                <li><strong>✅ Finished ({{ data.fp_analysis.finished | length }}):</strong>
+                    <ul>{% for t in data.fp_analysis.finished %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
+                </li>
+                <li><strong>❌ Failed ({{ data.fp_analysis.failed | length }}):</strong>
+                    <ul>{% for t in data.fp_analysis.failed %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
+                </li>
+                <li><strong>⚠️ Running ({{ data.fp_analysis.running | length }}):</strong>
+                    <ul>{% for t in data.fp_analysis.running %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
+                </li>
+                <li><strong>⏸️ Pending ({{ data.fp_analysis.pending | length }}):</strong>
+                    <ul>{% for t in data.fp_analysis.pending %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
+                </li>
+            </ul>
+        </details>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Анализ model_devi -->
+    {% if data.model_devi_data and data.model_devi_data|length > 0 %}
+    <div class="section">
+        <h2>📊 Model Deviation Tasks (Individual)</h2>
+        <p><strong>Total completed tasks:</strong> {{ data.model_devi_data|length }}</p>
+
+        <table>
+            <tr>
+                <th>Iteration</th>
+                <th>Task</th>
+                <th>Temp (K)</th>
+                <th>Mean max_devi_f</th>
+                <th>Max max_devi_f</th>
+                <th>Count</th>
+            </tr>
+            {% for t in data.model_devi_data %}
+            <tr>
+                <td><code>{{ t.iter }}</code></td>
+                <td><code>{{ t.task }}</code></td>
+                <td>{{ t.temperature or 'N/A' }}</td>
+                <td>{{ "%.4f"|format(t.mean) }}</td>
+                <td>{{ "%.4f"|format(t.max) }}</td>
+                <td>{{ t.count }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <details>
+            <summary>🖼️ Show histograms of max_devi_f</summary>
+            {% for t in data.model_devi_data %}
+            <div style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 6px; background: #fdfdfd;">
+                <h4>{{ t.iter }} / {{ t.task }}</h4>
+                {% if t.temperature %}
+                <p><strong>Temperature:</strong> {{ t.temperature }} K</p>
+                {% endif %}
+                <p><strong>Mean:</strong> {{ "%.4f"|format(t.mean) }},
+                   <strong>Max:</strong> {{ "%.4f"|format(t.max) }},
+                   <strong>N:</strong> {{ t.count }}</p>
+                {% if t.histogram_image %}
+                <img src="{{ t.histogram_image }}" alt="Histogram" style="max-width: 100%; border: 1px solid #eee;">
+                {% endif %}
+            </div>
+            {% endfor %}
+        </details>
+    </div>
+    {% endif %}
+
+    <!-- Список итераций -->
+    {% if data.iterations %}
+    <div class="section">
+        <h2>📋 Iterations</h2>
+        <ul style="font-family: monospace; padding-left: 20px;">
+            {% for it in data.iterations %}
+            <li><code>{{ it }}</code></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        DPGEN Web Monitor • Auto-refresh every 60 sec
+    </div>
+</div>
+
+<!-- Скрипты -->
+<script>
+// Обработка формы
+document.getElementById('dirForm').onsubmit = function(e) {
+    e.preventDefault();
+    const dir = document.getElementById('workDir').value.trim();
+    if (!dir) return;
+    fetch('/set_dir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dir: dir })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(err => {
+        alert('Network error: ' + err.message);
+    });
+};
+
+// График loss
+{% if data.loss_data and data.loss_data|length > 0 %}
+const ctx = document.getElementById('lossChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+     {
+        labels: Array.from({length: {{ data.loss_data|length }}}, (_, i) => `Step ${i + 1}`),
+        datasets: [{
+            label: 'Validation Loss',
+             {{ data.loss_data | tojson }},
+            borderColor: '#e74c3c',
+            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+            borderWidth: 2,
+            tension: 0.2
+        }]
+    },
+    options: { responsive: true }
+});
+{% endif %}
+
+// Автообновление
+setInterval(() => {
+    console.log("🔄 Auto-refresh...");
+    location.reload();
+}, 60000);
+</script>
+</body>
+</html>
