@@ -11,14 +11,14 @@ A real-time web interface for monitoring DPGEN tasks.
 - 🔄 Auto-refresh every 60 seconds
 
 ## Installation
-\`\`\`bash
+```
 pip install flask matplotlib numpy
-\`\`\`
+```
 
 ## How to Run
-\`\`\`bash
+```
 python app.py
-\`\`\`
+```
 
 Open in browser: \`http://127.0.0.1:5000\`
 
@@ -27,7 +27,7 @@ In the web interface:
 2. Click "Set Directory"
 
 ## Project Structure
-\`\`\`
+```
 DPGEN_WEB/
 ├── app.py
 ├── utils.py
@@ -36,7 +36,7 @@ DPGEN_WEB/
 ├── static/
 │   └── model_devi/   # generated histograms
 └── README.md
-\`\`\`
+```
 
 ## Notes
 - Histograms are generated once per task and reused.
