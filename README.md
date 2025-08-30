@@ -20,10 +20,10 @@ pip install flask matplotlib numpy
 python app.py
 ```
 
-Open in browser: \`http://127.0.0.1:5000\`
+Open in browser: <http://127.0.0.1:5000>
 
 In the web interface:
-1. Enter your DPGEN working directory (e.g. \`~/CALC/DPGEN/N4_dpgen_qe\`)
+1. Enter your DPGEN working directory (e.g. `~/CALC/DPGEN/N4_dpgen_qe`)
 2. Click "Set Directory"
 
 ## Project Structure
