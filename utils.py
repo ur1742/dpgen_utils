@@ -393,7 +393,7 @@ def analyze_model_devi_progress(work_dir):
                 try:
                     with open(input_lammps, 'r') as f:
                         content = f.read()
-                    t_match = re.search(r'variable\s+T\s+equal\s+(\d+\.?\d*)', content)
+                    t_match = re.search(r'variable\s+TEMP\s+equal\s+(\d+\.?\d*)', content)
                     if t_match:
                         temp = float(t_match.group(1))
                 except:
