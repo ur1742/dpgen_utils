@@ -32,7 +32,7 @@ python app.py
 Open in browser: <http://127.0.0.1:5000>
 
 In the web interface:
-1. Enter name of your DPGEN process working directory 
+1. Enter the name of your DPGEN process working directory 
 2. Click "Set Directory"
 
 ## Project Structure
