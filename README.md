@@ -1,6 +1,8 @@
-# DPGEN Web Monitor
+# DPGEN Web Monitor 0.1
+UNDER DEVELOPMENT
 
-A real-time web interface for monitoring DPGEN tasks.
+A real-time web interface for monitoring DPGEN tasks. 
+This version adapted ONLY for Quantum Espresso fp task
 
 ## Features
 - 🚀 Tracks current stage via `record.dpgen`
@@ -11,23 +13,23 @@ A real-time web interface for monitoring DPGEN tasks.
 - 🔄 Auto-refresh every 60 seconds
 
 ## Installation
-\`\`\`bash
+```
 pip install flask matplotlib numpy
-\`\`\`
+```
 
 ## How to Run
-\`\`\`bash
+```
 python app.py
-\`\`\`
+```
 
-Open in browser: \`http://127.0.0.1:5000\`
+Open in browser: <http://127.0.0.1:5000>
 
 In the web interface:
-1. Enter your DPGEN working directory (e.g. \`~/CALC/DPGEN/N4_dpgen_qe\`)
+1. Enter your DPGEN working directory 
 2. Click "Set Directory"
 
 ## Project Structure
-\`\`\`
+```
 DPGEN_WEB/
 ├── app.py
 ├── utils.py
@@ -36,7 +38,7 @@ DPGEN_WEB/
 ├── static/
 │   └── model_devi/   # generated histograms
 └── README.md
-\`\`\`
+```
 
 ## Notes
 - Histograms are generated once per task and reused.

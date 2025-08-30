@@ -368,3 +368,37 @@ def analyze_model_devi_progress(work_dir):
 
     results.sort(key=lambda x: (x['iter'], x['task']))
     return results
+
+def find_active_train_dir(hash_dir):
+    print(f"🔍 Поиск активной папки в: {hash_dir}")
+    try:
+        items = os.listdir(hash_dir)
+    except Exception as e:
+        print(f"❌ Не могу прочитать папку: {e}")
+        return None
+
+    train_dirs = sorted([
+        d for d in items
+        if d.isdigit() and len(d) == 3 and os.path.isdir(os.path.join(hash_dir, d))
+    ])
+    print(f"📁 Найдены цифровые папки: {train_dirs}")
+
+    for d in train_dirs:
+        subdir_path = os.path.join(hash_dir, d)
+        lcurve_path = os.path.join(subdir_path, 'lcurve.out')
+        try:
+            files = os.listdir(subdir_path)
+        except:
+            continue
+
+        has_finished = any('finished' in f for f in files)
+        has_lcurve = os.path.exists(lcurve_path)
+
+        print(f"📁 {d}: lcurve={has_lcurve}, finished={has_finished}")
+
+        if has_lcurve and not has_finished:
+            print(f"✅ Активная папка найдена: {subdir_path}")
+            return subdir_path
+
+    print("❌ Активная папка не найдена")
+    return None

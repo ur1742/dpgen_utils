@@ -142,12 +142,6 @@
             <tr><td><strong>Stage</strong></td><td>{{ data.current_stage.stage_label }}</td></tr>
         </table>
 
-        <!-- График обучения -->
-        {% if data.train_plot %}
-        <h3>📉 Training Loss Curve</h3>
-        <img src="{{ data.train_plot }}" alt="Training Loss" style="max-width: 100%; border: 1px solid #ddd;">
-        {% endif %}
-
         <!-- Анализ FP -->
         {% if data.fp_analysis %}
         <h3>🔍 FP Tasks Analysis</h3>
@@ -183,6 +177,16 @@
                 </li>
             </ul>
         </details>
+        {% endif %}
+
+        <!-- Live Training Plot -->
+        {% if data.show_train_plot %}
+        <h3>📉 Live Training Loss (Active: {{ data.active_train_subdir }})</h3>
+        <img src="/train_plot?t={{ '' | random }}" 
+             alt="Training Curve" 
+             style="max-width: 100%; border: 1px solid #ddd;"
+             onload="setTimeout(() => location.reload(), 45000)">
+        <p><em>Auto-refresh every 45 seconds</em></p>
         {% endif %}
     </div>
     {% endif %}
