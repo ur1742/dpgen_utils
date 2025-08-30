@@ -1,0 +1,180 @@
+{
+    "type_map": ["B", "F", "N", "C", "H"],
+    "mass_map": [10.81, 19.0, 14.01, 12.01, 1.008],
+    "init_data_prefix": "./",
+    "init_data_sys": ["./tr_data"],
+    "sys_configs_prefix": "./",
+    "sys_configs": [
+        ["./POSCAR"]
+    ],
+    "sys_batch_size": [1],
+    "numb_models": 4,
+    "mlp_engine": "dp",
+    "train_backend": "pytorch",
+    "training_iter0_model_path" : ["./start_model/000","./start_model/001","./start_model/002","./start_model/003"],
+    "training_init_model" : true,
+    "default_training_param": {
+        "model": {
+            "type_map": ["B", "F", "N", "C", "H"],
+            "descriptor": {
+                "type": "se_e2_a",
+                "sel": [6, 16, 6, 64, 144],
+                "rcut_smth": 0.5,
+                "rcut": 6.0,
+                "neuron": [25, 50, 100],
+                "resnet_dt": false,
+                "axis_neuron": 16,
+                "seed": 42
+            },
+            "fitting_net": {
+                "neuron": [240, 240, 240],
+                "resnet_dt": true,
+                "seed": 42
+            }
+        },
+        "learning_rate": {
+            "type": "exp",
+            "start_lr": 0.001,
+            "stop_lr": 1e-8,
+            "decay_steps": 1000
+        },
+        "loss": {
+            "start_pref_e": 0.02,
+            "limit_pref_e": 1,
+            "start_pref_f": 1000,
+            "limit_pref_f": 500,
+            "start_pref_v": 0,
+            "limit_pref_v": 0
+        },
+        "training": {
+            "numb_steps": 70000,
+            "seed": 10,
+            "disp_file": "lcurve.out",
+            "disp_freq": 100,
+            "save_freq": 10000
+        }
+    },
+    "model_devi_engine": "lammps",
+    "model_devi_dt": 0.001,
+    "model_devi_skip": 0,
+    "model_devi_f_trust_lo": 0.05,
+    "model_devi_f_trust_hi": 0.15,
+    "model_devi_clean_traj": false,
+    "model_devi_jobs": [
+        {
+            "sys_idx": [0],
+            "temps": [300],
+            "press": [1.0],
+            "trj_freq": 100,
+            "nsteps": 50000,
+    "model_devi_f_trust_lo": 0.03,
+    "model_devi_f_trust_hi": 0.12,
+            "ensemble": "nvt",
+            "_idx": "00"
+        },
+        {
+            "sys_idx": [0],
+            "temps": [350, 450, 500],
+            "press": [1.0],
+            "trj_freq": 100,
+            "nsteps": 100000,
+    "model_devi_f_trust_lo": 0.03,
+    "model_devi_f_trust_hi": 0.12,
+            "ensemble": "nvt",
+            "_idx": "01"
+        },
+        {
+            "sys_idx": [0],
+            "temps": [50, 150, 300],
+            "press": [1.0],
+            "trj_freq": 100,
+            "nsteps": 50000,
+    "model_devi_f_trust_lo": 0.03,
+    "model_devi_f_trust_hi": 0.12,
+            "ensemble": "npt",
+            "_idx": "02"
+        },
+        {
+            "sys_idx": [0],
+            "temps": [150, 400, 450],
+            "press": [1.0],
+            "trj_freq": 100,
+            "nsteps": 100000,
+    "model_devi_f_trust_lo": 0.03,
+    "model_devi_f_trust_hi": 0.12,
+            "ensemble": "npt",
+            "_idx": "03"
+        },
+        {
+            "sys_idx": [0],
+            "temps": [200, 400, 500],
+            "press": [1.0],
+            "trj_freq": 100,
+            "nsteps": 100000,
+            "ensemble": "npt",
+            "_idx": "04",
+            "model_devi_f_trust_lo": 0.03,
+            "model_devi_f_trust_hi": 0.1
+        },
+        {
+            "sys_idx": [0],
+            "temps": [400, 450, 500],
+            "press": [1.0],
+            "trj_freq": 100,
+            "nsteps": 100000,
+            "ensemble": "npt",
+            "_idx": "05",
+            "model_devi_f_trust_lo": 0.03,
+            "model_devi_f_trust_hi": 0.1
+        }
+    ],
+
+    
+    "fp_style": "pwscf",
+    "fp_pp_path": "./",
+    "fp_task_max": 200,
+    "fp_task_min": 1,
+    "fp_pp_files": [
+        "B.pbe-n-kjpaw_psl.1.0.0.UPF",
+        "F.pbe-n-kjpaw_psl.1.0.0.UPF",
+        "N.pbe-n-kjpaw_psl.1.0.0.UPF",
+        "C.pbe-n-kjpaw_psl.1.0.0.UPF",
+        "H.pbe-kjpaw_psl.1.0.0.UPF"
+    ],
+
+    "fp_params": {
+        "ecut": 60,
+        "ediff": 1e-8,
+        "smearing": "gauss",
+        "sigma" : 0.2,
+        "wdw_corr" : "dft-d3",
+        "kspacing" : 0.3
+
+    },
+    "user_fp_params": {
+        "control": {
+            "calculation": "scf",
+            "prefix": "dpgen",
+            "wf_collect": false,
+            "tstress": true,
+            "tprnfor": true,
+            "etot_conv_thr": 1e-5,
+            "forc_conv_thr": 1e-4
+        },
+        "system": {
+            "ecutwfc": 60,
+            "ecutrho": 480,
+            "smearing": "gaussian",
+            "degauss": 0.02,
+            "occupations": "smearing",
+            "vdw_corr" : "dft-d3"
+        },
+        "electrons": {
+            "electron_maxstep": 100,
+            "mixing_beta": 0.7,
+            "conv_thr": 1e-6
+        },
+
+        "kspacing" : 0.6
+    }
+}

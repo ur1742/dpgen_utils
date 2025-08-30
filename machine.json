@@ -1,0 +1,60 @@
+{
+    "train": [
+        {
+            "command": "dp",
+            "machine": {
+                "batch_type": "shell",
+                "local_root": "./",
+                "remote_root": "./",
+                "context_type": "local"
+            },
+            "resources": {
+                "batch_type": "shell",
+                "number_node": 1,
+                "cpu_per_node": 8,
+                "gpu_per_node": 1,
+                "queue_name": "medium",
+                "group_size": 4
+            }
+        }
+    ],
+    "model_devi": [
+        {
+            "command": "lmp",
+            "machine": {
+                "batch_type": "shell",
+                "local_root": "./",
+                "remote_root": "./",
+                "context_type": "local"
+            },
+            "resources": {
+                "batch_type": "shell",
+                "number_node": 1,
+                "cpu_per_node": 4,
+                "gpu_per_node": 1,
+                "queue_name": "medium",
+                "group_size": 30
+            }
+        }
+    ],
+    "fp": [
+        {
+            "command": "/usr/bin/mpirun -n 8 pw.x < input",
+            "machine": {
+                "batch_type": "shell",
+                "local_root": "./",
+                "remote_root": "./",
+                "context_type": "local"
+            },
+            "resources": {
+                "batch_type": "shell",
+                "number_node": 1,
+                "cpu_per_node": 16,
+                "gpu_per_node": 0,
+                "queue_name": "medium",
+                "group_size": 200,
+                "para_deg": 2
+            }
+        }
+    ]
+}
