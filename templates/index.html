@@ -1,4 +1,3 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,6 +102,21 @@
             color: #95a5a6;
             font-size: 0.9em;
         }
+        .loading {
+            color: #3498db;
+            font-style: italic;
+        }
+        .error {
+            color: #e74c3c;
+        }
+        .train-log-info {
+            background-color: #e8f4f8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -132,61 +146,73 @@
 
     <!-- Текущая задача -->
     {% if data.current_hash %}
-    <div class="section">
+    <div class="section current-task-section">
         <h2>🚀 Current Execution</h2>
         <table>
             <tr><th>Field</th><th>Value</th></tr>
-            <tr><td><strong>Hash Directory</strong></td><td><code>{{ data.current_hash.hash_name }}</code></td></tr>
-            <tr><td><strong>Last Modified</strong></td><td>{{ data.current_hash.mtime }}</td></tr>
-            <tr><td><strong>Iteration</strong></td><td>{{ data.current_stage.iter }}</td></tr>
-            <tr><td><strong>Stage</strong></td><td>{{ data.current_stage.stage_label }}</td></tr>
+            <tr><td><strong>Hash Directory</strong></td><td><code data-field="hash_name">{{ data.current_hash.hash_name }}</code></td></tr>
+            <tr><td><strong>Last Modified</strong></td><td data-field="mtime">{{ data.current_hash.mtime }}</td></tr>
+            <tr><td><strong>Iteration</strong></td><td data-field="iter">{{ data.current_stage.iter }}</td></tr>
+            <tr><td><strong>Stage</strong></td><td data-field="stage_label">{{ data.current_stage.stage_label }}</td></tr>
         </table>
 
         <!-- Анализ FP -->
         {% if data.fp_analysis %}
-        <h3>🔍 FP Tasks Analysis</h3>
-        <table>
-            <tr><th>Metric</th><th>Value</th></tr>
-            <tr><td><strong>Total Tasks</strong></td><td>{{ data.fp_analysis.total }}</td></tr>
-            <tr><td><strong>✅ Finished</strong></td><td>{{ data.fp_analysis.done }}</td></tr>
-            <tr><td><strong>❌ Failed</strong></td><td>{{ data.fp_analysis.failed | length }}</td></tr>
-            <tr><td><strong>⚠️ Running</strong></td><td>{{ data.fp_analysis.running | length }}</td></tr>
-            <tr><td><strong>⏸️ Pending</strong></td><td>{{ data.fp_analysis.pending | length }}</td></tr>
-            <tr><td><strong>🔄 Remaining</strong></td><td>{{ data.fp_analysis.remaining }}</td></tr>
-        </table>
+        <div class="fp-analysis-section">
+            <h3>🔍 FP Tasks Analysis</h3>
+            <table>
+                <tr><th>Metric</th><th>Value</th></tr>
+                <tr><td><strong>Total Tasks</strong></td><td data-fp="total">{{ data.fp_analysis.total }}</td></tr>
+                <tr><td><strong>✅ Finished</strong></td><td data-fp="done">{{ data.fp_analysis.done }}</td></tr>
+                <tr><td><strong>❌ Failed</strong></td><td data-fp="failed">{{ data.fp_analysis.failed | length }}</td></tr>
+                <tr><td><strong>⚠️ Running</strong></td><td data-fp="running">{{ data.fp_analysis.running | length }}</td></tr>
+                <tr><td><strong>⏸️ Pending</strong></td><td data-fp="pending">{{ data.fp_analysis.pending | length }}</td></tr>
+                <tr><td><strong>🔄 Remaining</strong></td><td data-fp="remaining">{{ data.fp_analysis.remaining }}</td></tr>
+            </table>
 
-        {% if data.fp_analysis.has_data %}
-        <p><strong>⏱️ Average task time:</strong> {{ data.fp_analysis.avg_duration_str }}</p>
-        <p><strong>🕒 Predicted time for remaining:</strong> {{ data.fp_analysis.predicted_remaining_str }}</p>
-        {% endif %}
+            {% if data.fp_analysis.has_data %}
+            <p><strong>⏱️ Average task time:</strong> <span data-fp="avg_duration">{{ data.fp_analysis.avg_duration_str }}</span></p>
+            <p><strong>🕒 Predicted time for remaining:</strong> <span data-fp="predicted">{{ data.fp_analysis.predicted_remaining_str }}</span></p>
+            {% endif %}
 
-        <details>
-            <summary>📋 Show task lists</summary>
-            <ul style="padding-left: 20px;">
-                <li><strong>✅ Finished ({{ data.fp_analysis.finished | length }}):</strong>
-                    <ul>{% for t in data.fp_analysis.finished %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
-                </li>
-                <li><strong>❌ Failed ({{ data.fp_analysis.failed | length }}):</strong>
-                    <ul>{% for t in data.fp_analysis.failed %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
-                </li>
-                <li><strong>⚠️ Running ({{ data.fp_analysis.running | length }}):</strong>
-                    <ul>{% for t in data.fp_analysis.running %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
-                </li>
-                <li><strong>⏸️ Pending ({{ data.fp_analysis.pending | length }}):</strong>
-                    <ul>{% for t in data.fp_analysis.pending %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
-                </li>
-            </ul>
-        </details>
+            <details>
+                <summary>📋 Show task lists</summary>
+                <ul style="padding-left: 20px;">
+                    <li><strong>✅ Finished ({{ data.fp_analysis.finished | length }}):</strong>
+                        <ul>{% for t in data.fp_analysis.finished %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
+                    </li>
+                    <li><strong>❌ Failed ({{ data.fp_analysis.failed | length }}):</strong>
+                        <ul>{% for t in data.fp_analysis.failed %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
+                    </li>
+                    <li><strong>⚠️ Running ({{ data.fp_analysis.running | length }}):</strong>
+                        <ul>{% for t in data.fp_analysis.running %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
+                    </li>
+                    <li><strong>⏸️ Pending ({{ data.fp_analysis.pending | length }}):</strong>
+                        <ul>{% for t in data.fp_analysis.pending %}<li><code>{{ t }}</code></li>{% endfor %}</ul>
+                    </li>
+                </ul>
+            </details>
+        </div>
         {% endif %}
 
         <!-- Live Training Plot -->
         {% if data.show_train_plot %}
-        <h3>📉 Live Training Loss (Active: {{ data.active_train_subdir }})</h3>
-        <img src="/train_plot?t={{ '' | random }}" 
+        <h3>📉 Live Training Loss (Active: <span id="activeSubdir">{{ data.active_train_subdir }}</span>)</h3>
+        
+        <!-- Информация из train.log -->
+        {% if data.train_log_info %}
+        <div class="train-log-info">
+            <strong>Training Info:</strong><br>
+            <span>Step: <strong>{{ data.train_log_info.batch }}</strong></span> | 
+            <span>ETA: <strong>{{ data.train_log_info.eta }}</strong></span> | 
+            <span>Finish: <strong>{{ data.train_log_info.finish_time }}</strong></span>
+        </div>
+        {% endif %}
+
+        <img id="trainPlotImg" src="/train_plot" 
              alt="Training Curve" 
-             style="max-width: 100%; border: 1px solid #ddd;"
-             onload="setTimeout(() => location.reload(), 45000)">
-        <p><em>Auto-refresh every 45 seconds</em></p>
+             style="max-width: 100%; border: 1px solid #ddd;">
+        <p><em>Auto-refresh every 30 seconds</em></p>
         {% endif %}
     </div>
     {% endif %}
@@ -256,6 +282,7 @@
 </div>
 
 <!-- Скрипты -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // Обработка формы
 document.getElementById('dirForm').onsubmit = function(e) {
@@ -280,31 +307,185 @@ document.getElementById('dirForm').onsubmit = function(e) {
     });
 };
 
-// График loss
+// Инициализация графика потерь
 {% if data.loss_data and data.loss_data|length > 0 %}
 const ctx = document.getElementById('lossChart').getContext('2d');
-new Chart(ctx, {
+window.lossChart = new Chart(ctx, {
     type: 'line',
-     {
+    data: {
         labels: Array.from({length: {{ data.loss_data|length }}}, (_, i) => `Step ${i + 1}`),
         datasets: [{
             label: 'Validation Loss',
-             {{ data.loss_data | tojson }},
+            data: {{ data.loss_data | tojson }},
             borderColor: '#e74c3c',
             backgroundColor: 'rgba(231, 76, 60, 0.1)',
             borderWidth: 2,
             tension: 0.2
         }]
     },
-    options: { responsive: true }
+    options: { 
+        responsive: true,
+        maintainAspectRatio: false
+    }
 });
 {% endif %}
 
-// Автообновление
+// Функция для обновления только текущей задачи
+function updateCurrentTask() {
+    const workDirInput = document.getElementById('workDir');
+    if (!workDirInput || !workDirInput.value.trim()) {
+        return;
+    }
+    
+    fetch('/current_status')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            console.error('Error fetching current status:', data.error);
+            return;
+        }
+        
+        updateCurrentTaskDisplay(data);
+        
+        // Обновляем график потерь если есть данные
+        if (data.loss_data && data.loss_data.length > 0) {
+            updateLossChart(data.loss_data);
+        }
+        
+        // Обновляем график обучения если нужно
+        if (data.show_train_plot) {
+            const img = document.querySelector('#trainPlotImg');
+            if (img) {
+                // Добавляем timestamp для обхода кэша
+                img.src = '/train_plot?t=' + new Date().getTime();
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error updating current task:', error);
+    });
+}
+
+// Функция обновления отображения текущей задачи
+function updateCurrentTaskDisplay(data) {
+    const currentTaskSection = document.querySelector('.current-task-section');
+    if (!currentTaskSection) return;
+    
+    if (data.current_hash) {
+        // Обновляем информацию о хэше
+        const hashElements = currentTaskSection.querySelectorAll('[data-field="hash_name"]');
+        hashElements.forEach(el => {
+            el.textContent = data.current_hash.hash_name || 'N/A';
+        });
+        
+        const mtimeElements = currentTaskSection.querySelectorAll('[data-field="mtime"]');
+        mtimeElements.forEach(el => {
+            el.textContent = data.current_hash.mtime || 'N/A';
+        });
+        
+        // Обновляем информацию о стадии
+        const iterElements = currentTaskSection.querySelectorAll('[data-field="iter"]');
+        iterElements.forEach(el => {
+            el.textContent = data.current_stage.iter || 'N/A';
+        });
+        
+        const stageElements = currentTaskSection.querySelectorAll('[data-field="stage_label"]');
+        stageElements.forEach(el => {
+            el.textContent = data.current_stage.stage_label || 'N/A';
+        });
+        
+        // Обновляем активную поддиректорию обучения
+        const activeSubdirElement = document.getElementById('activeSubdir');
+        if (activeSubdirElement) {
+            activeSubdirElement.textContent = data.active_train_subdir || 'N/A';
+        }
+        
+        // Обновляем информацию из train.log
+        const trainLogInfoDiv = document.querySelector('.train-log-info');
+        if (trainLogInfoDiv && data.train_log_info) {
+            trainLogInfoDiv.innerHTML = `
+                <strong>Training Info:</strong><br>
+                <span>Step: <strong>${data.train_log_info.batch}</strong></span> | 
+                <span>ETA: <strong>${data.train_log_info.eta}</strong></span> | 
+                <span>Finish: <strong>${data.train_log_info.finish_time}</strong></span>
+            `;
+            trainLogInfoDiv.style.display = 'block';
+        } else if (trainLogInfoDiv) {
+            trainLogInfoDiv.style.display = 'none';
+        }
+        
+        // Обновляем FP анализ
+        if (data.fp_analysis) {
+            updateFPAnalysis(data.fp_analysis);
+        }
+    }
+}
+
+// Функция обновления FP анализа
+function updateFPAnalysis(fpData) {
+    const fpSection = document.querySelector('.fp-analysis-section');
+    if (!fpSection) return;
+    
+    // Обновляем числовые значения
+    const totalEl = fpSection.querySelector('[data-fp="total"]');
+    if (totalEl) totalEl.textContent = fpData.total || 0;
+    
+    const doneEl = fpSection.querySelector('[data-fp="done"]');
+    if (doneEl) doneEl.textContent = fpData.done || 0;
+    
+    const failedEl = fpSection.querySelector('[data-fp="failed"]');
+    if (failedEl) failedEl.textContent = fpData.failed ? fpData.failed.length : 0;
+    
+    const runningEl = fpSection.querySelector('[data-fp="running"]');
+    if (runningEl) runningEl.textContent = fpData.running ? fpData.running.length : 0;
+    
+    const pendingEl = fpSection.querySelector('[data-fp="pending"]');
+    if (pendingEl) pendingEl.textContent = fpData.pending ? fpData.pending.length : 0;
+    
+    const remainingEl = fpSection.querySelector('[data-fp="remaining"]');
+    if (remainingEl) remainingEl.textContent = fpData.remaining || 0;
+    
+    if (fpData.has_data) {
+        const avgDurationEl = fpSection.querySelector('[data-fp="avg_duration"]');
+        if (avgDurationEl) avgDurationEl.textContent = fpData.avg_duration_str || 'N/A';
+        
+        const predictedEl = fpSection.querySelector('[data-fp="predicted"]');
+        if (predictedEl) predictedEl.textContent = fpData.predicted_remaining_str || 'N/A';
+    }
+}
+
+// Функция обновления графика потерь
+function updateLossChart(lossData) {
+    const chartElement = document.getElementById('lossChart');
+    if (!chartElement || !lossData || lossData.length === 0) return;
+    
+    // Если график уже существует, обновляем его
+    if (window.lossChart) {
+        const chart = window.lossChart;
+        // Обновляем метки (берем последние 10 значений)
+        const displayData = lossData.slice(-10);
+        chart.data.labels = Array.from({length: displayData.length}, (_, i) => `Step ${i + 1}`);
+        chart.data.datasets[0].data = displayData;
+        chart.update();
+    }
+}
+
+// Запускаем обновление текущей задачи каждые 30 секунд
+setInterval(updateCurrentTask, 30000);
+
+// Первый запуск через 5 секунд
+setTimeout(updateCurrentTask, 5000);
+
+// Автообновление всей страницы каждые 5 минут (на случай проблем)
 setInterval(() => {
-    console.log("🔄 Auto-refresh...");
+    console.log("🔄 Full page refresh...");
     location.reload();
-}, 60000);
+}, 300000);
 </script>
 </body>
 </html>

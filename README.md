@@ -1,4 +1,4 @@
-# DPGEN Web Monitor 0.2
+# DPGEN Web Monitor 0.3
 UNDER DEVELOPMENT
 
 A real-time web interface for monitoring DPGEN tasks. 

@@ -1,11 +1,10 @@
-# utils.py
 import os
 import re
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 # --- Путь для гистограмм ---
@@ -54,6 +53,61 @@ def get_current_hash_dir(work_dir):
         "hash_name": os.path.basename(latest_dir),
         "mtime": datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
     }
+
+
+def parse_train_log(train_log_path):
+    """
+    Парсит train.log для получения информации о шагах и ETA
+    """
+    if not os.path.exists(train_log_path):
+        return None
+    
+    try:
+        # Ищем последнюю строку с ETA
+        last_eta_line = None
+        with open(train_log_path, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                if 'DEEPMD INFO' in line and 'eta =' in line and 'batch' in line:
+                    last_eta_line = line.strip()
+        
+        if not last_eta_line:
+            return None
+        
+        # Парсим строку вида: [2025-08-30 22:27:03,177] DEEPMD INFO    batch     900: total wall time = 17.90 s, eta = 6:54:56
+        # Извлекаем информацию
+        timestamp_match = re.search(r'\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),', last_eta_line)
+        batch_match = re.search(r'batch\s+(\d+):', last_eta_line)
+        eta_match = re.search(r'eta = (\d+):(\d+):(\d+)', last_eta_line)
+        
+        if not (timestamp_match and batch_match and eta_match):
+            return None
+        
+        # Получаем текущее время из лога
+        log_time_str = timestamp_match.group(1)
+        log_time = datetime.strptime(log_time_str, '%Y-%m-%d %H:%M:%S')
+        
+        # Номер шага
+        batch_num = int(batch_match.group(1))
+        
+        # ETA в часах:минутах:секундах
+        eta_hours = int(eta_match.group(1))
+        eta_minutes = int(eta_match.group(2))
+        eta_seconds = int(eta_match.group(3))
+        
+        # Вычисляем предполагаемое время завершения
+        eta_delta = timedelta(hours=eta_hours, minutes=eta_minutes, seconds=eta_seconds)
+        finish_time = log_time + eta_delta
+        
+        return {
+            'batch': batch_num,
+            'eta': f"{eta_hours}:{eta_minutes:02d}:{eta_seconds:02d}",
+            'log_time': log_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'finish_time': finish_time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+    except Exception as e:
+        print(f"Error parsing train.log: {e}")
+        return None
 
 
 # --- Стадия из record.dpgen ---
