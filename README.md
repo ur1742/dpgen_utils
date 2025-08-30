@@ -13,11 +13,18 @@ This version adapted ONLY for Quantum Espresso fp task
 - 🔄 Auto-refresh every 60 seconds
 
 ## Installation
+
+Install dependencies:
+
 ```
 pip install flask matplotlib numpy
 ```
+Pull repository
 
 ## How to Run
+
+Just type:
+
 ```
 python app.py
 ```
@@ -25,7 +32,7 @@ python app.py
 Open in browser: <http://127.0.0.1:5000>
 
 In the web interface:
-1. Enter your DPGEN working directory 
+1. Enter your DPGEN process working directory 
 2. Click "Set Directory"
 
 ## Project Structure
