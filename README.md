@@ -1,7 +1,8 @@
 # DPGEN Web Monitor 0.1
 UNDER DEVELOPMENT
 
-A real-time web interface for monitoring DPGEN tasks.
+A real-time web interface for monitoring DPGEN tasks. 
+This version adapted ONLY for Quantum Espresso fp task
 
 ## Features
 - 🚀 Tracks current stage via `record.dpgen`
