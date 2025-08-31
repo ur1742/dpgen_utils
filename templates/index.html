@@ -153,6 +153,14 @@
             font-family: monospace;
             font-size: 0.9em;
         }
+        .model-devi-info {
+            background-color: #fff3e0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
         .card {
             background: white;
             border: 1px solid #ddd;
@@ -188,8 +196,6 @@
             <p style="color: red; margin-top: 10px;">❌ {{ error }}</p>
         {% endif %}
     </div>
-
-
 
     <!-- График ошибки обучения -->
     {% if data.loss_data and data.loss_data|length > 0 %}
@@ -269,6 +275,34 @@
              style="max-width: 100%; border: 1px solid #ddd;">
         <p><em>Auto-refresh every 30 seconds</em></p>
         {% endif %}
+
+        <!-- Live Model Deviation Info and Plot -->
+        {% if data.show_model_devi_plot and data.current_model_devi_info %}
+        <h3>📊 Live Model Deviation Analysis</h3>
+        
+        <!-- Информация о текущем процессе model deviation -->
+        <div class="model-devi-info">
+            <strong>Model Deviation Info:</strong><br>
+            <span>Task: <strong>{{ data.current_model_devi_info.task_name }}</strong></span>
+            {% if data.current_model_devi_info.temperature %}
+            | <span>Temperature: <strong>{{ data.current_model_devi_info.temperature }}K</strong></span>
+            {% endif %}
+            | <span>Steps: <strong>{{ data.current_model_devi_info.count }}</strong></span>
+            {% if data.current_model_devi_info.eta_info %}
+            | <span>ETA: <strong>{{ data.current_model_devi_info.eta_info.eta }}</strong></span>
+            {% endif %}
+            <br>
+            <span>Mean: <strong>{{ "%.4f"|format(data.current_model_devi_info.mean) }}</strong></span> |
+            <span>Max: <strong>{{ "%.4f"|format(data.current_model_devi_info.max) }}</strong></span> |
+            <span>Min: <strong>{{ "%.4f"|format(data.current_model_devi_info.min) }}</strong></span>
+        </div>
+
+        <!-- Гистограмма model deviation -->
+        <img id="modelDeviPlotImg" src="/model_devi_plot" 
+             alt="Model Deviation Distribution" 
+             style="max-width: 100%; border: 1px solid #ddd;">
+        <p><em>Auto-refresh every 30 seconds</em></p>
+        {% endif %}
     </div>
     {% endif %}
 
@@ -330,18 +364,20 @@
         </ul>
     </div>
     {% endif %}
+    
     <!-- Кнопки навигации -->
     {% if work_dir %}
     <div class="section">
         <h2>Train History</h2>
         <div class="btn-container">
-            <a href="/train_history" target="blank" class="btn-success">📊 View Training History</a>
+            <a href="/train_history" target="_blank" class="btn-success">📊 View Training History</a>
         </div>
         <p style="text-align: center; color: #7f8c8d; font-size: 0.9em;">
             Browse completed training tasks and their loss curves
         </p>
     </div>
     {% endif %}
+    
     <div class="footer">
         DPGEN Web Monitor 
     </div>
@@ -431,6 +467,15 @@ function updateCurrentTask() {
                 img.src = '/train_plot?t=' + new Date().getTime();
             }
         }
+        
+        // Обновляем гистограмму model deviation если нужно
+        if (data.show_model_devi_plot) {
+            const img = document.querySelector('#modelDeviPlotImg');
+            if (img) {
+                // Добавляем timestamp для обхода кэша
+                img.src = '/model_devi_plot?t=' + new Date().getTime();
+            }
+        }
     })
     .catch(error => {
         console.error('Error updating current task:', error);
@@ -485,13 +530,51 @@ function updateCurrentTaskDisplay(data) {
             trainLogInfoDiv.style.display = 'none';
         }
         
+        // Обновляем информацию о model deviation
+        const modelDeviInfoDiv = document.querySelector('.model-devi-info');
+        if (modelDeviInfoDiv && data.current_model_devi_info) {
+            let infoHtml = `
+                <strong>Model Deviation Info:</strong><br>
+                <span>Task: <strong>${data.current_model_devi_info.task_name}</strong></span>
+            `;
+            
+            if (data.current_model_devi_info.temperature) {
+                infoHtml += ` | <span>Temperature: <strong>${data.current_model_devi_info.temperature}K</strong></span>`;
+            }
+            
+            infoHtml += ` | <span>Steps: <strong>${data.current_model_devi_info.count}</strong></span>`;
+            
+          //  if (data.current_model_devi_info.eta_info && data.current_model_devi_info.eta_info.eta) {
+          //      infoHtml += ` | <span>ETA: <strong>${data.current_model_devi_info.eta_info.eta}</strong></span>`;
+          //  }
+            
+            infoHtml += `<br>
+                <span>Mean: <strong>${parseFloat(data.current_model_devi_info.mean).toFixed(4)}</strong></span> |
+                <span>Max: <strong>${parseFloat(data.current_model_devi_info.max).toFixed(4)}</strong></span> |
+                <span>Min: <strong>${parseFloat(data.current_model_devi_info.min).toFixed(4)}</strong></span>
+            `;
+            
+            modelDeviInfoDiv.innerHTML = infoHtml;
+            modelDeviInfoDiv.style.display = 'block';
+        } else if (modelDeviInfoDiv) {
+            modelDeviInfoDiv.style.display = 'none';
+        }
+        
+        // Обновляем гистограмму model deviation
+        if (data.show_model_devi_plot) {
+            const img = document.querySelector('#modelDeviPlotImg');
+            if (img) {
+                // Добавляем timestamp для обхода кэша
+                img.src = '/model_devi_plot?t=' + new Date().getTime();
+            }
+        }
+        
         // Обновляем FP анализ
         if (data.fp_analysis) {
             updateFPAnalysis(data.fp_analysis);
         }
     }
 }
-
 // Функция обновления FP анализа
 function updateFPAnalysis(fpData) {
     const fpSection = document.querySelector('.fp-analysis-section');

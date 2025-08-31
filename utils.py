@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -423,36 +424,171 @@ def analyze_model_devi_progress(work_dir):
     results.sort(key=lambda x: (x['iter'], x['task']))
     return results
 
+
 def find_active_train_dir(hash_dir):
-    print(f"🔍 Поиск активной папки в: {hash_dir}")
+    print(f"🔍 Поиск активной задачи обучения в: {hash_dir}")
     try:
         items = os.listdir(hash_dir)
     except Exception as e:
         print(f"❌ Не могу прочитать папку: {e}")
         return None
 
-    train_dirs = sorted([
+    # Ищем задачи с lcurve.out (для обучения)
+    task_dirs = sorted([
         d for d in items
-        if d.isdigit() and len(d) == 3 and os.path.isdir(os.path.join(hash_dir, d))
+        if d.startswith('task.') and os.path.isdir(os.path.join(hash_dir, d))
     ])
-    print(f"📁 Найдены цифровые папки: {train_dirs}")
+    print(f"📁 Найдены задачи: {task_dirs}")
 
-    for d in train_dirs:
-        subdir_path = os.path.join(hash_dir, d)
-        lcurve_path = os.path.join(subdir_path, 'lcurve.out')
-        try:
-            files = os.listdir(subdir_path)
-        except:
-            continue
+    for task_dir in task_dirs:
+        task_path = os.path.join(hash_dir, task_dir)
+        lcurve_path = os.path.join(task_path, 'lcurve.out')
+        
+        if os.path.exists(lcurve_path):
+            try:
+                files = os.listdir(task_path)
+                has_finished = any('finished' in f.lower() for f in files)
+                
+                print(f"📁 {task_dir}: lcurve={os.path.exists(lcurve_path)}, finished={has_finished}")
+                
+                if not has_finished:
+                    print(f"✅ Активная задача обучения найдена: {task_path}")
+                    return task_path
+            except Exception as e:
+                print(f"❌ Ошибка при проверке задачи {task_dir}: {e}")
+                continue
 
-        has_finished = any('finished' in f for f in files)
-        has_lcurve = os.path.exists(lcurve_path)
-
-        print(f"📁 {d}: lcurve={has_lcurve}, finished={has_finished}")
-
-        if has_lcurve and not has_finished:
-            print(f"✅ Активная папка найдена: {subdir_path}")
-            return subdir_path
-
-    print("❌ Активная папка не найдена")
+    print("❌ Активная задача обучения не найдена")
     return None
+
+
+def find_active_model_devi_dir(hash_dir):
+    print(f"🔍 Поиск активной задачи model deviation в: {hash_dir}")
+    try:
+        items = os.listdir(hash_dir)
+    except Exception as e:
+        print(f"❌ Не могу прочитать папку: {e}")
+        return None
+
+    # Ищем задачи с model_devi.out
+    task_dirs = sorted([
+        d for d in items
+        if d.startswith('task.') and os.path.isdir(os.path.join(hash_dir, d))
+    ])
+    print(f"📁 Найдены задачи: {task_dirs}")
+
+    # Ищем активные задачи model deviation
+    for task_dir in task_dirs:
+        task_path = os.path.join(hash_dir, task_dir)
+        model_devi_out = os.path.join(task_path, 'model_devi.out')
+        
+        if os.path.exists(model_devi_out):
+            try:
+                files = os.listdir(task_path)
+                has_finished = any('finished' in f.lower() for f in files)
+                
+                print(f"📁 {task_dir}: model_devi.out={os.path.exists(model_devi_out)}, finished={has_finished}")
+                
+                if not has_finished:
+                    print(f"✅ Активная задача model deviation найдена: {task_path}")
+                    return task_path
+            except Exception as e:
+                print(f"❌ Ошибка при проверке задачи {task_dir}: {e}")
+                continue
+
+    print("❌ Активная задача model deviation не найдена")
+    return None
+
+
+def analyze_current_model_devi(hash_dir):
+    """Анализ текущего процесса model deviation в хэш-директории"""
+    if not os.path.exists(hash_dir):
+        return None
+    
+    # Ищем активные задачи model deviation (есть model_devi.out, но нет finished файлов)
+    active_tasks = []
+    
+    for item in os.listdir(hash_dir):
+        if item.startswith('task.') and os.path.isdir(os.path.join(hash_dir, item)):
+            task_path = os.path.join(hash_dir, item)
+            model_devi_out = os.path.join(task_path, 'model_devi.out')
+            
+            if os.path.exists(model_devi_out):
+                # Проверяем, есть ли файлы с "finished"
+                try:
+                    files = os.listdir(task_path)
+                    has_finished = any('finished' in f.lower() for f in files)
+                    
+                    if not has_finished:  # Активная задача
+                        active_tasks.append({
+                            'task_path': task_path,
+                            'model_devi_out': model_devi_out,
+                            'task_name': item
+                        })
+                except:
+                    continue
+    
+    if not active_tasks:
+        return None
+    
+    # Берем первую активную задачу
+    task = active_tasks[0]
+    
+    # Читаем данные model deviation
+    data = read_model_devi_f(task['model_devi_out'])
+    if data is None or len(data) == 0:
+        return None
+    
+    # Получаем температуру из input.lammps
+    temp = None
+    input_lammps = os.path.join(task['task_path'], 'input.lammps')
+    if os.path.exists(input_lammps):
+        try:
+            with open(input_lammps, 'r') as f:
+                content = f.read()
+            t_match = re.search(r'variable\s+TEMP\s+equal\s+(\d+\.?\d*)', content)
+            if t_match:
+                temp = float(t_match.group(1))
+        except:
+            pass
+    
+    # Получаем время начала из времени создания файла
+    start_time = None
+    try:
+        start_time = os.path.getctime(task['model_devi_out'])
+    except:
+        pass
+    
+    # Оцениваем ETA на основе количества обработанных шагов
+    current_steps = len(data)
+    eta_info = None
+    
+    if start_time and current_steps > 0:
+        elapsed_time = time.time() - start_time
+        steps_per_second = current_steps / elapsed_time if elapsed_time > 0 else 0
+        
+        # Предполагаем, что обычно ~10000 шагов (можно настроить)
+        total_expected_steps = 10000
+        remaining_steps = max(0, total_expected_steps - current_steps)
+        
+        if steps_per_second > 0:
+            eta_seconds = remaining_steps / steps_per_second
+            eta_str = format_time(eta_seconds)
+            eta_info = {
+                'current_steps': current_steps,
+                'total_expected': total_expected_steps,
+                'eta': eta_str,
+                'steps_per_second': round(steps_per_second, 2)
+            }
+    
+    # Возвращаем только сериализуемые данные (без numpy массива data)
+    return {
+        'task_name': task['task_name'],
+        'temperature': temp,
+        'count': len(data),
+        'mean': float(np.mean(data)),
+        'std': float(np.std(data)),
+        'min': float(np.min(data)),
+        'max': float(np.max(data)),
+        'eta_info': eta_info
+    }

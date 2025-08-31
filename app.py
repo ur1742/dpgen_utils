@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, send_file
 import os
 from datetime import datetime
 import numpy as np
+import time
 from io import BytesIO
 import matplotlib
 matplotlib.use('Agg')
@@ -17,7 +18,10 @@ from utils import (
     get_current_stage_from_record,
     generate_train_plot,
     find_active_train_dir,
-    parse_train_log
+    find_active_model_devi_dir,
+    parse_train_log,
+    analyze_current_model_devi,
+    read_model_devi_f
 )
 
 app = Flask(__name__)
@@ -158,6 +162,73 @@ def train_plot():
         return "Error generating plot", 500
 
 
+@app.route('/model_devi_plot')
+def model_devi_plot():
+    work_dir = app.config['WORK_DIR']
+    if not work_dir:
+        return "No work directory set", 400
+
+    current_hash = get_current_hash_dir(work_dir)
+    current_stage = get_current_stage_from_record(work_dir)
+
+    if not current_hash or not current_stage:
+        return "No active task", 404
+
+    if current_stage["stage_name"] != "run_model_devi":
+        return "Not in run_model_devi stage", 404
+
+    # Получаем данные для гистограммы напрямую (не через analyze_current_model_devi)
+    active_model_devi_dir = find_active_model_devi_dir(current_hash["hash_dir"])
+    if not active_model_devi_dir:
+        return "No active model deviation directory found", 404
+
+    model_devi_out = os.path.join(active_model_devi_dir, 'model_devi.out')
+    if not os.path.exists(model_devi_out):
+        return "model_devi.out not found", 404
+
+    # Читаем данные напрямую
+    data = read_model_devi_f(model_devi_out)
+    if data is None or len(data) == 0:
+        return "No model deviation data found", 404
+
+    # Получаем информацию о задаче для заголовка
+    task_name = os.path.basename(active_model_devi_dir)
+    
+    # Получаем температуру из input.lammps
+    temp = None
+    input_lammps = os.path.join(active_model_devi_dir, 'input.lammps')
+    if os.path.exists(input_lammps):
+        try:
+            with open(input_lammps, 'r') as f:
+                content = f.read()
+            t_match = re.search(r'variable\s+TEMP\s+equal\s+(\d+\.?\d*)', content)
+            if t_match:
+                temp = float(t_match.group(1))
+        except:
+            pass
+
+    # Генерируем гистограмму в памяти
+    try:
+        plt.figure(figsize=(10, 6))
+        plt.hist(data, bins=50, alpha=0.7, color='steelblue', edgecolor='black')
+        plt.xlabel('Max Devi F')
+        plt.ylabel('Frequency')
+        plt.title(f'Model Deviation Distribution - {task_name}')
+        if temp:
+            plt.suptitle(f'Temperature: {temp}K', y=0.95)
+        plt.grid(True, alpha=0.3)
+
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        plt.close()
+
+        buffer.seek(0)
+        return buffer.getvalue(), 200, {'Content-Type': 'image/png'}
+    except Exception as e:
+        print(f"Error generating plot: {e}")
+        return "Error generating plot", 500
+
+
 @app.route('/cached_train_plot/<filename>')
 def cached_train_plot(filename):
     """Отдает кэшированный график"""
@@ -252,11 +323,16 @@ def current_status():
             'fp_analysis': data.get('fp_analysis'),
             'show_train_plot': data.get('show_train_plot'),
             'active_train_subdir': data.get('active_train_subdir'),
-            'loss_data': data.get('loss_data', [])[-10:] if data.get('loss_data') else [],  # Последние 10 значений
-            'train_log_info': data.get('train_log_info')  # Добавляем информацию из train.log
+            'loss_data': data.get('loss_data', [])[-10:] if data.get('loss_data') else [],
+            'train_log_info': data.get('train_log_info'),
+            'show_model_devi_plot': data.get('show_model_devi_plot'),
+            'current_model_devi_info': data.get('current_model_devi_info')
         }
         return jsonify(current_task_data)
     except Exception as e:
+        print(f"Error in current_status: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
@@ -271,23 +347,39 @@ def collect_dpgen_status(work_dir):
     fp_analysis = None
     show_train_plot = False
     train_log_info = None
+    show_model_devi_plot = False
+    current_model_devi_info = None
 
     if current_hash and current_stage:
         stage_name = current_stage["stage_name"]
         if stage_name == "run_train":
             show_train_plot = True
-            # Читаем train.log только для стадии run_train и из хэш директории
+            # Ищем активную задачу обучения ТОЛЬКО на стадии run_train
             active_train_dir = find_active_train_dir(current_hash["hash_dir"])
-            if active_train_dir:
+            if active_train_dir and os.path.exists(active_train_dir):
                 train_log_path = os.path.join(active_train_dir, 'train.log')
-                train_log_info = parse_train_log(train_log_path)
+                if os.path.exists(train_log_path):
+                    train_log_info = parse_train_log(train_log_path)
         elif stage_name == "run_fp":
             fp_analysis = analyze_fp_tasks(current_hash["hash_dir"])
+        elif stage_name == "run_model_devi":
+            show_model_devi_plot = True
+    # Получаем информацию о текущем процессе model deviation
+            current_model_devi_info = analyze_current_model_devi(current_hash["hash_dir"])
 
     model_devi_data = analyze_model_devi_progress(work_dir)
 
-    active_dir = find_active_train_dir(current_hash["hash_dir"]) if current_hash else None
-    active_subdir = os.path.basename(active_dir) if active_dir else None
+    # Для отображения активной поддиректории - только для текущей стадии
+    active_dir = None
+    active_subdir = None
+    if current_hash and current_stage:
+        stage_name = current_stage.get("stage_name", "")
+        if stage_name == "run_train":
+            active_dir = find_active_train_dir(current_hash["hash_dir"])
+            active_subdir = os.path.basename(active_dir) if active_dir else None
+        elif stage_name == "run_model_devi":
+            active_dir = find_active_model_devi_dir(current_hash["hash_dir"])
+            active_subdir = os.path.basename(active_dir) if active_dir else None
 
     return {
         'loss_data': loss_data[-10:],
@@ -297,9 +389,11 @@ def collect_dpgen_status(work_dir):
         'current_stage': current_stage,
         'fp_analysis': fp_analysis,
         'show_train_plot': show_train_plot,
+        'show_model_devi_plot': show_model_devi_plot,
+        'current_model_devi_info': current_model_devi_info,
         'active_train_subdir': active_subdir,
         'model_devi_data': model_devi_data,
-        'train_log_info': train_log_info  # Добавляем информацию из train.log
+        'train_log_info': train_log_info
     }
 
 
