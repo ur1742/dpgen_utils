@@ -426,39 +426,37 @@ def analyze_model_devi_progress(work_dir):
 
 
 def find_active_train_dir(hash_dir):
-    print(f"🔍 Поиск активной задачи обучения в: {hash_dir}")
+    print(f"🔍 Поиск активной папки в: {hash_dir}")
     try:
         items = os.listdir(hash_dir)
     except Exception as e:
         print(f"❌ Не могу прочитать папку: {e}")
         return None
 
-    # Ищем задачи с lcurve.out (для обучения)
-    task_dirs = sorted([
+    train_dirs = sorted([
         d for d in items
-        if d.startswith('task.') and os.path.isdir(os.path.join(hash_dir, d))
+        if d.isdigit() and len(d) == 3 and os.path.isdir(os.path.join(hash_dir, d))
     ])
-    print(f"📁 Найдены задачи: {task_dirs}")
+    print(f"📁 Найдены цифровые папки: {train_dirs}")
 
-    for task_dir in task_dirs:
-        task_path = os.path.join(hash_dir, task_dir)
-        lcurve_path = os.path.join(task_path, 'lcurve.out')
-        
-        if os.path.exists(lcurve_path):
-            try:
-                files = os.listdir(task_path)
-                has_finished = any('finished' in f.lower() for f in files)
-                
-                print(f"📁 {task_dir}: lcurve={os.path.exists(lcurve_path)}, finished={has_finished}")
-                
-                if not has_finished:
-                    print(f"✅ Активная задача обучения найдена: {task_path}")
-                    return task_path
-            except Exception as e:
-                print(f"❌ Ошибка при проверке задачи {task_dir}: {e}")
-                continue
+    for d in train_dirs:
+        subdir_path = os.path.join(hash_dir, d)
+        lcurve_path = os.path.join(subdir_path, 'lcurve.out')
+        try:
+            files = os.listdir(subdir_path)
+        except:
+            continue
 
-    print("❌ Активная задача обучения не найдена")
+        has_finished = any('finished' in f for f in files)
+        has_lcurve = os.path.exists(lcurve_path)
+
+        print(f"📁 {d}: lcurve={has_lcurve}, finished={has_finished}")
+
+        if has_lcurve and not has_finished:
+            print(f"✅ Активная папка найдена: {subdir_path}")
+            return subdir_path
+
+    print("❌ Активная папка не найдена")
     return None
 
 
